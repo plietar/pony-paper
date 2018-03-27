@@ -2,17 +2,21 @@ sudo: required
 services:
 - docker
 
+language: generic
+
 install:
 - docker pull jonathanlking/pdflatex-base
 
 script:
 - docker run --rm -v "$PWD":/usr/src/project -w /usr/src/project jonathanlking/pdflatex-base
   /bin/bash -c 'pdflatex main.tex && pdflatex main.tex'
+- mkdir dist && cp main.pdf dist/
 
 deploy:
   provider: pages
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
   keep-history: true
+  local_dir: dist
   on:
     branch: master
