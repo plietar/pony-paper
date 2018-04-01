@@ -1,154 +1,120 @@
-\documentclass{article}
+\documentclass[format=acmsmall, authordraft, authorversion]{acmart}\settopmatter{printfolios=true,printccs=false,printacmref=false}
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
-\usepackage[a4paper, margin=1in]{geometry}
-\usepackage{trfrac}
 \usepackage{amssymb}
 \usepackage{mathpartir}
 
-\renewcommand{\tt}[1]{\mathtt{#1}}
-\renewcommand{\it}[1]{\mathit{#1}}
-\renewcommand{\cal}[1]{\mathcal{#1}}
+\acmJournal{PACMPL}
+\acmVolume{1}
+\acmNumber{CONF}
+\acmArticle{1}
+\acmYear{2018}
+\acmMonth{1}
+\acmDOI{}
+
+\bibliographystyle{ACM-Reference-Format}
+\citestyle{acmauthoryear}
+\setcopyright{none}
 
 \newcommand{\seq}[1]{\overline{#1}}
-\newcommand{\Alias}{\cal{A}}
-\newcommand{\Unalias}{\cal{U}}
+\newcommand{\Alias}{\mathcal{A}}
+\newcommand{\Unalias}{\mathcal{U}}
+\newcommand{\lambdas}{\lambda s}
 
-\title{Pony}
 \begin{document}
+\title{Pony}
+\author{Paul Li\'etar}
+
+\begin{abstract}
+Text of abstract \ldots.
+\end{abstract}
 
 \maketitle
 
 \section{Static semantics}
-\begin{figure}[ht!]
+
 \[ \begin{array}[t]{l@{\hspace{2mm}}l}
-\tt{P} ::= \seq{\tt{CT}}\ \seq{\tt{AT}}\\
-\tt{CT} ::= \tt{class}\ \tt{C}\ \seq{\tt{F}}\\
-\tt{AT} ::= \tt{actor}\ \tt{A}\ \seq{\tt{F}}\ \seq{\tt{B}}\\
-\tt{F} ::= \tt{var}\ f : \tt{S}\ \kappa\\
-\tt{B} ::= \tt{be}\ b(\seq{x: \tt{S}\ \kappa}) \Rightarrow e\\
+\mathtt{P} ::= \seq{\mathtt{CT}}\ \seq{\mathtt{AT}}\\
+\mathtt{CT} ::= \mathtt{class}\ \mathtt{C}\ \seq{\mathtt{F}}\\
+\mathtt{AT} ::= \mathtt{actor}\ \mathtt{A}\ \seq{\mathtt{F}}\ \seq{\mathtt{B}}\\
+\mathtt{F} ::= \mathtt{var}\ f : \mathtt{S}\ \kappa\\
+\mathtt{B} ::= \mathtt{be}\ b(\seq{x: \mathtt{S}\ \kappa}) \Rightarrow e\\
 e ::= x \\
 \qquad ~|~ x = e \\
 \qquad ~|~ e.f \\
 \qquad ~|~ e.f = e \\
 \qquad ~|~ e.b(\seq{e}) \\
 \qquad ~|~ e ; e\\
-\qquad ~|~ \tt{new}\ \tt{S}
+\qquad ~|~ \mathtt{new}\ \mathtt{S}
 \end{array} \]
-\caption{Syntax}
-\end{figure}
 
-\begin{figure}[ht!]
-    \centering
-\end{figure}
+\begin{mathpar}
+    \inferrule*[right=\textsc{T-Local}]{
+        x \in \Gamma
+    }{
+        \Gamma \vdash x : \Gamma(x)
+    }
 
-\begin{figure}[ht!]
-\centering
-\makebox[\linewidth]{\
-\begin{minipage}[b]{0.5\linewidth}
-    \begin{mathpar}
-        \inferrule*[right=\textsc{T-Local}]{
-            x \in \Gamma
-        }{
-            \Gamma \vdash x : \Gamma(x)
-        }
-    \end{mathpar}
-\end{minipage}
-\begin{minipage}[b]{0.5\linewidth}
-    \begin{mathpar}
-        \inferrule*[right=\textsc{T-AsnLocal}]{
-            \Gamma(x) = \tt{S}\ \kappa
-            \\
-            \Gamma \vdash_\Alias e : \tt{S}\ \kappa
-        }{
-            \Gamma \vdash x = e : \Unalias(\tt{S}\ \kappa)
-        }
-    \end{mathpar}
-\end{minipage}
-}
-\makebox[\linewidth]{\
-\begin{minipage}[b]{0.5\linewidth}
-    \begin{mathpar}
-        \inferrule*[right=\textsc{T-Fld}]{
-            \Gamma \vdash e : \tt{S}\ \lambda
-            \\
-            \textit{Field}(\tt{S}, f) = \tt{S}' \kappa
-        }{
-            \Gamma \vdash e.f : \tt{S}'\ (\lambda \vartriangleright \kappa)
-        }
-    \end{mathpar}
-\end{minipage}
-\begin{minipage}[b]{0.5\linewidth}
-    \begin{mathpar}
-        \inferrule*[right=\textsc{T-AsnFld}]{
-            \Gamma \vdash e : \tt{S}\ \lambda
-            \\
-            \textit{Field}(\tt{S}, f) = \tt{S}' \kappa
-            \\
-            \Gamma \vdash_\Alias e' : \tt{S}'\ \kappa
-            \\\\
-            \Gamma \vdash e : \tt{S}'\ \lambda'
-            \\
-            \lambda \triangleleft \Alias(\lambda')
-        }{
-            \Gamma \vdash e.f = e' : \tt{S}'\ (\lambda \blacktriangleright \kappa)
-        }
-    \end{mathpar}
-\end{minipage}
-}
-\makebox[\linewidth]{\
-\begin{minipage}[b]{0.5\linewidth}
-    \begin{mathpar}
-        \inferrule*[right=\textsc{T-Ctor}]{
-            \tt{C} \in \tt{P}
-        }{
-            \tt{new}\ \tt{C}: \tt{C}\ \tt{iso}-
-        }
-    \end{mathpar}
-\end{minipage}
-\begin{minipage}[b]{0.5\linewidth}
-    \begin{mathpar}
-        \inferrule*[right=\textsc{T-Ator}]{
-            \tt{A} \in \tt{P}
-        }{
-            \tt{new}\ \tt{A}: \tt{A}\ \tt{tag}
-        }
-    \end{mathpar}
-\end{minipage}
-}
-\makebox[\linewidth]{\
-\begin{minipage}[b]{0.5\linewidth}
-    \begin{mathpar}
-        \inferrule*[right=\textsc{T-Behv}]{
-            \Gamma \vdash e : \tt{A}\ \lambda
-            \\
-            \seq{\Gamma \vdash_\Alias e : \tt{S}\ \lambda}
-            \\\\
-            \it{Behv}(A, b) = \seq{\tt{S}\ \lambda}
-        }{
-            \Gamma \vdash e.b(\seq{e}) : \tt{A}\ \lambda
-        }
-    \end{mathpar}
-\end{minipage}
-\begin{minipage}[b]{0.5\linewidth}
-    \begin{mathpar}
-        \inferrule*[right=\textsc{T-Seq}]{
-            \Gamma \vdash e : \tt{S}\ \lambda
-            \\
-            \Gamma \vdash e' : \tt{S}'\ \lambda'
-        }{
-            \Gamma \vdash e ; e' : \tt{S}'\ \lambda'
-        }
-    \end{mathpar}
-\end{minipage}
-}
-\caption{Typing rules}
-\end{figure}
+    \inferrule*[right=\textsc{T-AsnLocal}]{
+        \Gamma(x) = \mathtt{S}\ \kappa
+        \\
+        \Gamma \vdash_\Alias e : \mathtt{S}\ \kappa
+    }{
+        \Gamma \vdash x = e : \Unalias(\mathtt{S}\ \kappa)
+    }
+
+    \inferrule*[right=\textsc{T-Fld}]{
+        \Gamma \vdash e : \mathtt{S}\ \lambda
+        \\
+        \textit{Field}(\mathtt{S}, f) = \mathtt{S}' \kappa
+    }{
+        \Gamma \vdash e.f : \mathtt{S}'\ (\lambda \vartriangleright \kappa)
+    }
+
+    \inferrule*[right=\textsc{T-AsnFld}]{
+        \Gamma \vdash e : \mathtt{S}\ \lambda
+        \\
+        \textit{Field}(\mathtt{S}, f) = \mathtt{S}' \kappa
+        \\
+        \Gamma \vdash_\Alias e' : \mathtt{S}'\ \kappa
+        \\\\
+        \Gamma \vdash e : \mathtt{S}'\ \lambda'
+        \\
+        \lambda \triangleleft \Alias(\lambda')
+    }{
+        \Gamma \vdash e.f = e' : \mathtt{S}'\ (\lambda \blacktriangleright \kappa)
+    }
+
+    \inferrule*[right=\textsc{T-Ctor}]{
+        \mathtt{C} \in \mathtt{P}
+    }{
+        \mathtt{new}\ \mathtt{C}: \mathtt{C}\ \mathtt{iso}-
+    }
+
+    \inferrule*[right=\textsc{T-Behv}]{
+        \Gamma \vdash e : \mathtt{A}\ \lambda
+        \\
+        \seq{\Gamma \vdash_\Alias e : \mathtt{S}\ \lambda}
+        \\\\
+        \mathit{Behv}(A, b) = \seq{\mathtt{S}\ \lambda}
+    }{
+        \Gamma \vdash e.b(\seq{e}) : \mathtt{A}\ \lambda
+    }
+
+    \inferrule*[right=\textsc{T-Seq}]{
+        \Gamma \vdash e : \mathtt{S}\ \lambda
+        \\
+        \Gamma \vdash e' : \mathtt{S}'\ \lambda'
+    }{
+        \Gamma \vdash e ; e' : \mathtt{S}'\ \lambda'
+    }
+\end{mathpar}
 
 \section{Soundness}
 \subsection{Paths}
+
 \[
-    p ::= \tt{this} \mid x \mid p . f
+    p ::= \mathtt{this} \mid x \mid p . f
 \]
 
 \subsection{Visibility}
@@ -156,41 +122,53 @@ e ::= x \\
     \inferrule*[right=\textsc{V-This}]{
         \iota \in \chi
     }{
-        \chi, \Delta, \iota \vdash \iota : \{ \tt{ref} \}, \tt{this}
+        \Delta, \chi, \iota \vdash \iota : \{ \mathtt{ref} \}, \mathtt{this}
     }
 
     \inferrule*[right=\textsc{V-Fld}]{
-        \chi, \Delta, \iota \vdash \iota' : \lambda s, p
+        \Delta, \chi, \iota \vdash \iota' : \lambdas, p
         \\
         \chi(\iota', f) = \iota''
         \\\\
-        \it{Field}(\chi(\iota)\downarrow_1, f) = \tt{S}\ \kappa
+        \mathit{Field}(\chi(\iota)\downarrow_1, f) = \mathtt{S}\ \kappa
     }{
-        \chi, \Delta, \iota \vdash \iota'' : \lambda s \circ \kappa, p.f
+        \Delta, \chi, \iota \vdash \iota'' : \lambdas \circ \kappa, p.f
     }
 
     \inferrule*[right=\textsc{V-Local}]{
         \chi(\alpha, x) = \iota
         \\
-        \Delta(\alpha, x) = \tt{S}\ \kappa
+        \Delta(\alpha, x) = \mathtt{S}\ \kappa
     }{
-        \chi, \Delta, \alpha \vdash \iota : \{ \kappa, \Unalias(\kappa) \}, x
+        \Delta, \chi, \alpha \vdash \iota : \{ \kappa, \Unalias(\kappa) \}, x
     }
 
     \inferrule*[right=\textsc{V-Active}]{
         \chi(\alpha, t_a) = \iota
         \\
-        \Delta(\alpha, t_a) = \tt{S}\ \lambda
+        \Delta(\alpha, t_a) = \mathtt{S}\ \lambda
     }{
-        \chi, \Delta, \alpha \vdash \iota : \{ \lambda \}, t_a
+        \Delta, \chi, \alpha \vdash \iota : \{ \lambda \}, t_a
     }
 \end{mathpar}
 
-\section{Well-formed visibility}
-A heap $\chi$'s visibility is well-formed if and only if:
-
+\subsection{Well-formed visibility}
+$\textit{WFV}(\Delta, \chi)$ iff $\forall \alpha, \alpha', \iota, p, p', \lambdas, \lambdas', \iota_0, p_0, \lambda_0$
 \begin{enumerate}
-    \item Forall
+    \item If $\alpha \neq \alpha'$
+        and $\Delta, \chi, \alpha \vdash \iota : \lambdas, p$
+        and $\Delta, \chi, \alpha' \vdash \iota : \lambdas', p'$
+        then $\lambdas \sim_g \lambdas'$.
+
+    \item If $\Delta, \chi, \alpha \vdash \iota_0 : \lambdas_0, p_0$
+        and $\textit{Writable}(\lambdas_0)$
+        and $\Delta, \chi, \iota_0 \vdash \iota : \lambdas, p$
+        and $\Delta, \chi, \iota_0 \vdash \iota : \lambdas', p'$
+        then either
+        \begin{enumerate}
+            \item $\lambdas \sim_l \lambdas'$ or
+            \item $\chi, \alpha \vdash p \sim p'$
+        \end{enumerate}
 \end{enumerate}
 
 \end{document}
