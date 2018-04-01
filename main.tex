@@ -2,10 +2,195 @@
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage[a4paper, margin=1in]{geometry}
+\usepackage{trfrac}
+\usepackage{amssymb}
+\usepackage{mathpartir}
+
+\renewcommand{\tt}[1]{\mathtt{#1}}
+\renewcommand{\it}[1]{\mathit{#1}}
+\renewcommand{\cal}[1]{\mathcal{#1}}
+
+\newcommand{\seq}[1]{\overline{#1}}
+\newcommand{\Alias}{\cal{A}}
+\newcommand{\Unalias}{\cal{U}}
 
 \title{Pony}
 \begin{document}
 
 \maketitle
+
+\section{Static semantics}
+\begin{figure}[ht!]
+\[ \begin{array}[t]{l@{\hspace{2mm}}l}
+\tt{P} ::= \seq{\tt{CT}}\ \seq{\tt{AT}}\\
+\tt{CT} ::= \tt{class}\ \tt{C}\ \seq{\tt{F}}\\
+\tt{AT} ::= \tt{actor}\ \tt{A}\ \seq{\tt{F}}\ \seq{\tt{B}}\\
+\tt{F} ::= \tt{var}\ f : \tt{S}\ \kappa\\
+\tt{B} ::= \tt{be}\ b(\seq{x: \tt{S}\ \kappa}) \Rightarrow e\\
+e ::= x \\
+\qquad ~|~ x = e \\
+\qquad ~|~ e.f \\
+\qquad ~|~ e.f = e \\
+\qquad ~|~ e.b(\seq{e}) \\
+\qquad ~|~ e ; e\\
+\qquad ~|~ \tt{new}\ \tt{S}
+\end{array} \]
+\caption{Syntax}
+\end{figure}
+
+\begin{figure}[ht!]
+    \centering
+\end{figure}
+
+\begin{figure}[ht!]
+\centering
+\makebox[\linewidth]{\
+\begin{minipage}[b]{0.5\linewidth}
+    \begin{mathpar}
+        \inferrule*[right=\textsc{T-Local}]{
+            x \in \Gamma
+        }{
+            \Gamma \vdash x : \Gamma(x)
+        }
+    \end{mathpar}
+\end{minipage}
+\begin{minipage}[b]{0.5\linewidth}
+    \begin{mathpar}
+        \inferrule*[right=\textsc{T-AsnLocal}]{
+            \Gamma(x) = \tt{S}\ \kappa
+            \\
+            \Gamma \vdash_\Alias e : \tt{S}\ \kappa
+        }{
+            \Gamma \vdash x = e : \Unalias(\tt{S}\ \kappa)
+        }
+    \end{mathpar}
+\end{minipage}
+}
+\makebox[\linewidth]{\
+\begin{minipage}[b]{0.5\linewidth}
+    \begin{mathpar}
+        \inferrule*[right=\textsc{T-Fld}]{
+            \Gamma \vdash e : \tt{S}\ \lambda
+            \\
+            \textit{Field}(\tt{S}, f) = \tt{S}' \kappa
+        }{
+            \Gamma \vdash e.f : \tt{S}'\ (\lambda \vartriangleright \kappa)
+        }
+    \end{mathpar}
+\end{minipage}
+\begin{minipage}[b]{0.5\linewidth}
+    \begin{mathpar}
+        \inferrule*[right=\textsc{T-AsnFld}]{
+            \Gamma \vdash e : \tt{S}\ \lambda
+            \\
+            \textit{Field}(\tt{S}, f) = \tt{S}' \kappa
+            \\
+            \Gamma \vdash_\Alias e' : \tt{S}'\ \kappa
+            \\\\
+            \Gamma \vdash e : \tt{S}'\ \lambda'
+            \\
+            \lambda \triangleleft \Alias(\lambda')
+        }{
+            \Gamma \vdash e.f = e' : \tt{S}'\ (\lambda \blacktriangleright \kappa)
+        }
+    \end{mathpar}
+\end{minipage}
+}
+\makebox[\linewidth]{\
+\begin{minipage}[b]{0.5\linewidth}
+    \begin{mathpar}
+        \inferrule*[right=\textsc{T-Ctor}]{
+            \tt{C} \in \tt{P}
+        }{
+            \tt{new}\ \tt{C}: \tt{C}\ \tt{iso}-
+        }
+    \end{mathpar}
+\end{minipage}
+\begin{minipage}[b]{0.5\linewidth}
+    \begin{mathpar}
+        \inferrule*[right=\textsc{T-Ator}]{
+            \tt{A} \in \tt{P}
+        }{
+            \tt{new}\ \tt{A}: \tt{A}\ \tt{tag}
+        }
+    \end{mathpar}
+\end{minipage}
+}
+\makebox[\linewidth]{\
+\begin{minipage}[b]{0.5\linewidth}
+    \begin{mathpar}
+        \inferrule*[right=\textsc{T-Behv}]{
+            \Gamma \vdash e : \tt{A}\ \lambda
+            \\
+            \seq{\Gamma \vdash_\Alias e : \tt{S}\ \lambda}
+            \\\\
+            \it{Behv}(A, b) = \seq{\tt{S}\ \lambda}
+        }{
+            \Gamma \vdash e.b(\seq{e}) : \tt{A}\ \lambda
+        }
+    \end{mathpar}
+\end{minipage}
+\begin{minipage}[b]{0.5\linewidth}
+    \begin{mathpar}
+        \inferrule*[right=\textsc{T-Seq}]{
+            \Gamma \vdash e : \tt{S}\ \lambda
+            \\
+            \Gamma \vdash e' : \tt{S}'\ \lambda'
+        }{
+            \Gamma \vdash e ; e' : \tt{S}'\ \lambda'
+        }
+    \end{mathpar}
+\end{minipage}
+}
+\caption{Typing rules}
+\end{figure}
+
+\section{Soundness}
+\subsection{Paths}
+\[
+    p ::= \tt{this} \mid x \mid p . f
+\]
+
+\subsection{Visibility}
+\begin{mathpar}
+    \inferrule*[right=\textsc{V-This}]{
+        \iota \in \chi
+    }{
+        \chi, \Delta, \iota \vdash \iota : \{ \tt{ref} \}, \tt{this}
+    }
+
+    \inferrule*[right=\textsc{V-Fld}]{
+        \chi, \Delta, \iota \vdash \iota' : \lambda s, p
+        \\
+        \chi(\iota', f) = \iota''
+        \\\\
+        \it{Field}(\chi(\iota)\downarrow_1, f) = \tt{S}\ \kappa
+    }{
+        \chi, \Delta, \iota \vdash \iota'' : \lambda s \circ \kappa, p.f
+    }
+
+    \inferrule*[right=\textsc{V-Local}]{
+        \chi(\alpha, x) = \iota
+        \\
+        \Delta(\alpha, x) = \tt{S}\ \kappa
+    }{
+        \chi, \Delta, \alpha \vdash \iota : \{ \kappa, \Unalias(\kappa) \}, x
+    }
+
+    \inferrule*[right=\textsc{V-Active}]{
+        \chi(\alpha, t_a) = \iota
+        \\
+        \Delta(\alpha, t_a) = \tt{S}\ \lambda
+    }{
+        \chi, \Delta, \alpha \vdash \iota : \{ \lambda \}, t_a
+    }
+\end{mathpar}
+
+\section{Well-formed visibility}
+A heap $\chi$'s visibility is well-formed if and only if:
+
+\begin{enumerate}
+    \item Forall
+\end{enumerate}
 
 \end{document}
