@@ -5,10 +5,10 @@ services:
 language: generic
 
 install:
-- docker pull jonathanlking/pdflatex-base
+- docker pull plietar/texlive
 
 script:
-- docker run --rm -v "$PWD":/usr/src/project -w /usr/src/project jonathanlking/pdflatex-base
+- docker run --rm -v "$PWD":/usr/src/project -w /usr/src/project plietar/texlive
   /bin/bash -c 'pdflatex main.tex && pdflatex main.tex'
 - mkdir dist && cp main.pdf dist/
 
