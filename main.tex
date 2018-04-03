@@ -31,23 +31,47 @@ Text of abstract \ldots.
 
 \maketitle
 
-\section{Static semantics}
+\section{Syntax}
 
-\[ \begin{array}[t]{l@{\hspace{2mm}}l}
-\mathtt{P} ::= \seq{\mathtt{CT}}\ \seq{\mathtt{AT}}\\
-\mathtt{CT} ::= \mathtt{class}\ \mathtt{C}\ \seq{\mathtt{F}}\\
-\mathtt{AT} ::= \mathtt{actor}\ \mathtt{A}\ \seq{\mathtt{F}}\ \seq{\mathtt{B}}\\
-\mathtt{F} ::= \mathtt{var}\ f : \mathtt{S}\ \kappa\\
-\mathtt{B} ::= \mathtt{be}\ b(\seq{x: \mathtt{S}\ \kappa}) \Rightarrow e\\
-e ::= x \\
-\qquad ~|~ x = e \\
-\qquad ~|~ e.f \\
-\qquad ~|~ e.f = e \\
-\qquad ~|~ e.b(\seq{e}) \\
-\qquad ~|~ e ; e\\
-\qquad ~|~ \mathtt{new}\ \mathtt{S}
-\end{array} \]
+\begin{align*}
+\mathtt{P} &::= \seq{\mathtt{CT}}\ \seq{\mathtt{AT}}\\
+\mathtt{CT} &::= \mathtt{class}\ \mathtt{C}\ \seq{\mathtt{F}}\\
+\mathtt{AT} &::= \mathtt{actor}\ \mathtt{A}\ \seq{\mathtt{F}}\ \seq{\mathtt{B}}\\
+\mathtt{F} &::= \mathtt{var}\ f : \mathtt{S}\ \kappa\\
+\mathtt{B} &::= \mathtt{be}\ b(\seq{x: \mathtt{S}\ \kappa}) \Rightarrow e\\
+e &::= x \\
+&\quad ~|~ x = e \\
+&\quad ~|~ e.f \\
+&\quad ~|~ e.f = e \\
+&\quad ~|~ e.b(\seq{e}) \\
+&\quad ~|~ e ; e\\
+&\quad ~|~ \mathtt{new}\ \mathtt{S}
+\end{align*}
 
+\section{Capabilities}
+\begin{align*}
+    \kappa &::= \texttt{iso} \mid \texttt{trn} \mid \texttt{ref} \mid \texttt{val} \mid \texttt{box} \mid \texttt{tag}\\
+    \lambda &::= \kappa \mid \texttt{iso}- \mid \texttt{trn}-
+\end{align*}
+
+\begin{mathpar}
+\inferrule*{}{\mathtt{iso}- \leq \{ \mathtt{iso}, \mathtt{trn}- \}}
+\and
+\inferrule*{}{\mathtt{trn}- \leq \{ \mathtt{trn}, \mathtt{ref}, \mathtt{val} \} \leq \mathtt{box}}
+\and
+\inferrule*{}{ \{ \mathtt{iso}, \mathtt{box} \} \leq \mathtt{tag} }
+\and
+\inferrule*{}{ \lambda \leq \lambda }
+\and
+\inferrule*{
+  \lambda \leq \lambda''\\
+  \lambda'' \leq \lambda'
+}{
+  \lambda \leq \lambda'
+}
+\end{mathpar}
+
+\section{Typing rules}
 \begin{mathpar}
     \inferrule*[right=\textsc{T-Local}]{
         x \in \Gamma
@@ -110,14 +134,15 @@ e ::= x \\
     }
 \end{mathpar}
 
-\section{Soundness}
-\subsection{Paths}
-
-\[
-    p ::= \mathtt{this} \mid x \mid p . f
-\]
+\section{Runtime}
+\subsection{Active and Passive Temporaries}
 
 \subsection{Visibility}
+\begin{align*}
+    p &::= \mathtt{this} \mid x \mid t_a . f \mid p . f\\
+    pg &::= p \mid t_a
+\end{align*}
+
 \begin{mathpar}
     \inferrule*[right=\textsc{V-This}]{
         \iota \in \chi
@@ -126,13 +151,13 @@ e ::= x \\
     }
 
     \inferrule*[right=\textsc{V-Fld}]{
-        \Delta, \chi, \iota \vdash \iota' : \lambdas, p
+        \Delta, \chi, \iota \vdash \iota' : \lambdas, pg
         \\
         \chi(\iota', f) = \iota''
         \\\\
         \mathit{Field}(\chi(\iota)\downarrow_1, f) = \mathtt{S}\ \kappa
     }{
-        \Delta, \chi, \iota \vdash \iota'' : \lambdas \circ \kappa, p.f
+        \Delta, \chi, \iota \vdash \iota'' : \lambdas \circ \kappa, pg.f
     }
 
     \inferrule*[right=\textsc{V-Local}]{
@@ -158,7 +183,7 @@ $\textit{WFV}(\Delta, \chi)$ iff $\forall \alpha, \alpha', \iota, p, p', \lambda
     \item If $\alpha \neq \alpha'$
         and $\Delta, \chi, \alpha \vdash \iota : \lambdas, p$
         and $\Delta, \chi, \alpha' \vdash \iota : \lambdas', p'$
-        then $\lambdas \sim_g \lambdas'$.
+        then $\lambdas \sim_g \lambdas'$
 
     \item If $\Delta, \chi, \alpha \vdash \iota_0 : \lambdas_0, p_0$
         and $\textit{Writable}(\lambdas_0)$
@@ -169,6 +194,28 @@ $\textit{WFV}(\Delta, \chi)$ iff $\forall \alpha, \alpha', \iota, p, p', \lambda
             \item $\lambdas \sim_l \lambdas'$ or
             \item $\chi, \alpha \vdash p \sim p'$
         \end{enumerate}
+
+    \item If $\Delta, \chi, \alpha \vdash \iota : \lambdas, p$
+        and $\Delta, \chi, \alpha \vdash \iota : \{ \lambda \}, t_a$
+        then $\lambdas \sim_l \Alias(\lambda)$
+\end{enumerate}
+
+\section{Recovery}
+\subsection{Regioned capabilities}
+\begin{align*}
+    \lambda &::= \texttt{iso}- \mid \texttt{iso} \mid \texttt{val} \mid \texttt{tag} \\
+    &\quad \mid (\texttt{trn}-, r_{id}) \mid (\texttt{trn}, r_{id}) \mid (\texttt{ref}, r_{id}) \mid (\texttt{box}, r_{id}) 
+\end{align*}
+
+\subsection{Well-formed regions}
+$\textit{WFR}(\Delta, \chi)$ iff $\forall \alpha, \mathtt{S}, z, z', \lambda, \lambda'$,\\
+If $\chi(\alpha, z) = \chi(\alpha, z')$
+and $\Delta(\alpha, z) = \mathtt{S}\ \lambda$
+and $\Delta(\alpha, z') = \mathtt{S}\ \lambda'$
+then either
+\begin{enumerate}
+    \item $\mathit{Region}(\lambda) = \mathit{Region}(\lambda')$ or
+    \item $\lambda \sim_g \lambda'$
 \end{enumerate}
 
 \end{document}
