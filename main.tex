@@ -31,24 +31,109 @@ Text of abstract \ldots.
 
 \maketitle
 
-\section{Syntax}
+\section{Actors}
+\begin{figure}[ht!]
+\centering
+\begin{alignat*}{3}
+    \mathtt{P}  \quad\in\quad& \mathit{Program}  \quad&::=&\quad \seq{\mathtt{CT}}\ \seq{\mathtt{AT}}\\
+    \mathtt{CT} \quad\in\quad& \mathit{ClassDef} \quad&::=&\quad \mathtt{class}\ \mathtt{C}\ \seq{\mathtt{F}}\\
+    \mathtt{AT} \quad\in\quad& \mathit{ActorDef} \quad&::=&\quad \mathtt{actor}\ \mathtt{A}\ \seq{\mathtt{F}}\ \seq{\mathtt{B}}\\
+    \mathtt{F}  \quad\in\quad& \mathit{Field}    \quad&::=&\quad \mathtt{var}\ f : \mathtt{S}\ \kappa\\
+    \mathtt{B}  \quad\in\quad& \mathit{Behv}     \quad&::=&\quad \mathtt{be}\ b(\seq{x: \mathtt{S}\ \kappa}) \Rightarrow e\\
+    e           \quad\in\quad& \mathit{Expr}     \quad&::=&\quad x \mid x = e \mid e.f \mid e.f = e\\
+                             &                   \quad&\mid&\quad e.b(\seq{e}) \mid e ; e \mid \mathtt{new}\ \mathtt{S}
+\end{alignat*}
+\caption{Syntax}
+\end{figure}
 
-\begin{align*}
-\mathtt{P} &::= \seq{\mathtt{CT}}\ \seq{\mathtt{AT}}\\
-\mathtt{CT} &::= \mathtt{class}\ \mathtt{C}\ \seq{\mathtt{F}}\\
-\mathtt{AT} &::= \mathtt{actor}\ \mathtt{A}\ \seq{\mathtt{F}}\ \seq{\mathtt{B}}\\
-\mathtt{F} &::= \mathtt{var}\ f : \mathtt{S}\ \kappa\\
-\mathtt{B} &::= \mathtt{be}\ b(\seq{x: \mathtt{S}\ \kappa}) \Rightarrow e\\
-e &::= x \\
-&\quad ~|~ x = e \\
-&\quad ~|~ e.f \\
-&\quad ~|~ e.f = e \\
-&\quad ~|~ e.b(\seq{e}) \\
-&\quad ~|~ e ; e\\
-&\quad ~|~ \mathtt{new}\ \mathtt{S}
-\end{align*}
+\begin{figure}[ht!]
+\centering
+\begin{alignat*}{3}
+    \chi    \quad\in\quad& \mathit{Heap}       \quad&=&\quad \mathit{Addr}\rightarrow(\mathit{Actor}\cup\mathit{Object})\\
+    \nu     \quad\in\quad& \mathit{Value}      \quad&=&\quad \mathit{Addr}\cup\{\mathit{null}\}\\
+    \iota   \quad\in\quad& \mathit{Addr}       \quad&=&\quad \mathit{ActorAddr} \cup \mathit{ObjectAddr}\\
+    \alpha  \quad\in\quad& \mathit{ActorAddr}  \quad\\
+    \omega  \quad\in\quad& \mathit{ObjectAddr} \quad\\
+                         & \mathit{Object}     \quad&=&\quad \mathit{ClassID}\times(\mathit{FieldID}\rightarrow\mathit{Value})\\
+                         & \mathit{Actor}      \quad&=&\quad \mathit{ActorID}\times(\mathit{FieldID}\rightarrow\mathit{Value})\\
+                         &                     \quad& &\quad \times\seq{\mathit{Message}}\times\mathit{Locals}\times\mathit{Expr}\\
+    \varphi \quad\in\quad& \mathit{Locals}     \quad&=&\quad \mathit{LocalID}\rightarrow\mathit{Value}\\
+                         & \mathit{LocalID}    \quad&=&\quad \mathit{SourceID}\times\mathit{TempID}\\
+    \mu     \quad\in\quad& \mathit{Message}    \quad&=&\quad \mathit{MethodID}\times\seq{\mathit{Value}}
+\end{alignat*}
+\caption{Runtime entities}
+\end{figure}
 
-\section{Capabilities}
+\section{Typing rules}
+\begin{figure}[ht!]
+\centering
+\begin{mathpar}
+    \inferrule*[right=\textsc{Local}]{
+        \varphi' = \varphi[t_a\mapsto\varphi(x)]
+    }{
+        \chi, \varphi, x \leadsto \chi, \varphi', t_a
+    }
+    \and
+    \inferrule*[right=\textsc{AsnLocal}]{
+        \varphi' = \varphi[t_a\mapsto\varphi(x), x\mapsto\varphi(t_p)]
+    }{
+        \chi, \varphi, x = t_p \leadsto \chi, \varphi', t_a
+    }
+    \and
+    \inferrule*[right=\textsc{Fld}]{
+        \varphi' = \varphi[t_a\mapsto\chi(t_a, f)]
+    }{
+        \chi, \varphi, t_a.f \leadsto \chi, \varphi', t_a
+    }
+    \and
+    \inferrule*[right=\textsc{AsnFld}]{
+        \iota = \varphi(t_a)\\\\
+        \chi' = \chi[\iota, f \mapsto \varphi(t_p)]\\\\
+        \varphi' = \varphi[t_a\mapsto\chi(\iota, f)]
+    }{
+        \chi, \varphi, t_a.f = t_p \leadsto \chi, \varphi', t_a
+    }
+    \and
+    \inferrule*[right=\textsc{Ator}]{
+        \alpha \not\in \chi\\
+        \seq{f} = \mathcal{F}s(\mathtt{A})\\\\
+        \chi' = \chi[\alpha\mapsto(
+            \mathtt{A},
+            \seq{f}\mapsto\mathit{null}, 
+            \epsilon,
+            \epsilon,
+            \epsilon
+        )]\\\\
+        \varphi' = \varphi[t_a\mapsto\alpha]
+    }{
+        \chi, \varphi, \mathtt{new}\ \mathtt{A} \leadsto \chi, \varphi, t_a
+    }
+    \and
+    \inferrule*[right=\textsc{Ctor}]{
+        \omega \not\in \chi\\
+        \seq{f} = \mathcal{F}s(\mathtt{C})\\\\
+        \chi' = \chi[\alpha\mapsto(\mathtt{C}, \seq{f}\mapsto\mathit{null})]\\\\
+        \varphi' = \varphi[t_a\mapsto\omega]
+    }{
+        \chi, \varphi, \mathtt{new}\ \mathtt{C} \leadsto \chi, \varphi, t_a
+    }
+    \and
+    \inferrule*[right=\textsc{Seq}]{ }{
+        \chi, \varphi, t_a ; e \leadsto \chi, \varphi, e
+    }
+    \and
+    \inferrule*[right=\textsc{Async}]{
+        \alpha = \varphi(t_p)\\
+        \seq{\mu} = \chi(\alpha)\downarrow_3\\\\
+        \chi' = \chi[\alpha\mapsto\seq{\mu} \cdot (b, \seq{\varphi(t_p)})]
+    }{
+        \chi, \varphi, t_p.b(\seq{t_p}) \leadsto \chi', \varphi, t_p
+    }
+\end{mathpar}
+\caption{Local Execution}
+\end{figure}
+
+\section{Reference Capabilities}
 \begin{align*}
     \kappa &::= \texttt{iso} \mid \texttt{trn} \mid \texttt{ref} \mid \texttt{val} \mid \texttt{box} \mid \texttt{tag}\\
     \lambda &::= \kappa \mid \texttt{iso}- \mid \texttt{trn}-
@@ -72,13 +157,14 @@ e &::= x \\
 \end{mathpar}
 
 \section{Typing rules}
+\begin{figure}[ht!]
 \begin{mathpar}
     \inferrule*[right=\textsc{T-Local}]{
         x \in \Gamma
     }{
         \Gamma \vdash x : \Gamma(x)
     }
-
+\and
     \inferrule*[right=\textsc{T-AsnLocal}]{
         \Gamma(x) = \mathtt{S}\ \kappa
         \\
@@ -86,7 +172,7 @@ e &::= x \\
     }{
         \Gamma \vdash x = e : \Unalias(\mathtt{S}\ \kappa)
     }
-
+\and
     \inferrule*[right=\textsc{T-Fld}]{
         \Gamma \vdash e : \mathtt{S}\ \lambda
         \\
@@ -94,27 +180,41 @@ e &::= x \\
     }{
         \Gamma \vdash e.f : \mathtt{S}'\ (\lambda \vartriangleright \kappa)
     }
-
+\and
     \inferrule*[right=\textsc{T-AsnFld}]{
         \Gamma \vdash e : \mathtt{S}\ \lambda
         \\
         \textit{Field}(\mathtt{S}, f) = \mathtt{S}' \kappa
-        \\
+        \\\\
         \Gamma \vdash_\Alias e' : \mathtt{S}'\ \kappa
         \\\\
-        \Gamma \vdash e : \mathtt{S}'\ \lambda'
+        \Gamma \vdash e' : \mathtt{S}'\ \lambda'
         \\
         \lambda \triangleleft \Alias(\lambda')
     }{
         \Gamma \vdash e.f = e' : \mathtt{S}'\ (\lambda \blacktriangleright \kappa)
     }
-
+\and
     \inferrule*[right=\textsc{T-Ctor}]{
         \mathtt{C} \in \mathtt{P}
     }{
         \mathtt{new}\ \mathtt{C}: \mathtt{C}\ \mathtt{iso}-
     }
-
+\and
+    \inferrule*[right=\textsc{T-Ator}]{
+        \mathtt{A} \in \mathtt{P}
+    }{
+        \mathtt{new}\ \mathtt{A}: \mathtt{A}\ \mathtt{tag}
+    }
+\and
+    \inferrule*[right=\textsc{T-Seq}]{
+        \Gamma \vdash e : \mathtt{S}\ \lambda
+        \\
+        \Gamma \vdash e' : \mathtt{S}'\ \lambda'
+    }{
+        \Gamma \vdash e ; e' : \mathtt{S}'\ \lambda'
+    }
+\and
     \inferrule*[right=\textsc{T-Behv}]{
         \Gamma \vdash e : \mathtt{A}\ \lambda
         \\
@@ -124,42 +224,39 @@ e &::= x \\
     }{
         \Gamma \vdash e.b(\seq{e}) : \mathtt{A}\ \lambda
     }
-
-    \inferrule*[right=\textsc{T-Seq}]{
-        \Gamma \vdash e : \mathtt{S}\ \lambda
-        \\
-        \Gamma \vdash e' : \mathtt{S}'\ \lambda'
-    }{
-        \Gamma \vdash e ; e' : \mathtt{S}'\ \lambda'
-    }
 \end{mathpar}
+\caption{Typing rules}
+\end{figure}
 
 \section{Runtime}
 \subsection{Active and Passive Temporaries}
 
 \subsection{Visibility}
-\begin{align*}
-    p &::= \mathtt{this} \mid x \mid t_a . f \mid p . f\\
-    pg &::= p \mid t_a
-\end{align*}
+\begin{alignat*}{3}
+    p        \quad\in\quad& \mathit{Path}    \quad&::=&\quad \mathtt{this} \mid x \mid t_a . f \mid p . f\\
+    pe       \quad\in\quad& \mathit{PathExt} \quad&::=&\quad p \mid t_a\\
+    \lambdas \quad\in\quad& \mathit{CapSet}  \quad&::=&\quad \cdots
+\end{alignat*}
 
+\begin{figure}[ht!]
+\centering
 \begin{mathpar}
     \inferrule*[right=\textsc{V-This}]{
         \iota \in \chi
     }{
         \Delta, \chi, \iota \vdash \iota : \{ \mathtt{ref} \}, \mathtt{this}
     }
-
+    \and
     \inferrule*[right=\textsc{V-Fld}]{
-        \Delta, \chi, \iota \vdash \iota' : \lambdas, pg
+        \Delta, \chi, \iota \vdash \iota' : \lambdas, pe
         \\
         \chi(\iota', f) = \iota''
         \\\\
         \mathit{Field}(\chi(\iota)\downarrow_1, f) = \mathtt{S}\ \kappa
     }{
-        \Delta, \chi, \iota \vdash \iota'' : \lambdas \circ \kappa, pg.f
+        \Delta, \chi, \iota \vdash \iota'' : \lambdas \circ \kappa, pe.f
     }
-
+    \and
     \inferrule*[right=\textsc{V-Local}]{
         \chi(\alpha, x) = \iota
         \\
@@ -167,7 +264,7 @@ e &::= x \\
     }{
         \Delta, \chi, \alpha \vdash \iota : \{ \kappa, \Unalias(\kappa) \}, x
     }
-
+    \and
     \inferrule*[right=\textsc{V-Active}]{
         \chi(\alpha, t_a) = \iota
         \\
@@ -176,6 +273,8 @@ e &::= x \\
         \Delta, \chi, \alpha \vdash \iota : \{ \lambda \}, t_a
     }
 \end{mathpar}
+\caption{Visibility}
+\end{figure}
 
 \subsection{Well-formed visibility}
 $\textit{WFV}(\Delta, \chi)$ iff $\forall \alpha, \alpha', \iota, p, p', \lambdas, \lambdas', \iota_0, p_0, \lambda_0$
