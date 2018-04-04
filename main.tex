@@ -12,6 +12,8 @@
 \acmMonth{1}
 \acmDOI{}
 
+\setlength{\parindent}{0in}
+
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}
 \setcopyright{none}
@@ -64,9 +66,9 @@ Text of abstract \ldots.
 \caption{Runtime entities}
 \end{figure}
 
-\section{Typing rules}
 \begin{figure}[ht!]
 \centering
+\fbox{$\chi, \varphi, e \leadsto \chi, \varphi, e$}
 \begin{mathpar}
     \inferrule*[right=\textsc{Local}]{
         \varphi' = \varphi[t_a\mapsto\varphi(x)]
@@ -158,6 +160,8 @@ Text of abstract \ldots.
 
 \section{Typing rules}
 \begin{figure}[ht!]
+\centering
+\fbox{$\Gamma \vdash e : \mathtt{S}\ \lambda$}
 \begin{mathpar}
     \inferrule*[right=\textsc{T-Local}]{
         x \in \Gamma
@@ -240,6 +244,7 @@ Text of abstract \ldots.
 
 \begin{figure}[ht!]
 \centering
+\fbox{$\Delta, \chi, \iota \vdash \iota : \lambdas, pe$}
 \begin{mathpar}
     \inferrule*[right=\textsc{V-This}]{
         \iota \in \chi
@@ -277,6 +282,7 @@ Text of abstract \ldots.
 \end{figure}
 
 \subsection{Well-formed visibility}
+\parbox{\textwidth}{
 $\textit{WFV}(\Delta, \chi)$ iff $\forall \alpha, \alpha', \iota, p, p', \lambdas, \lambdas', \iota_0, p_0, \lambda_0$
 \begin{enumerate}
     \item If $\alpha \neq \alpha'$
@@ -291,13 +297,21 @@ $\textit{WFV}(\Delta, \chi)$ iff $\forall \alpha, \alpha', \iota, p, p', \lambda
         then either
         \begin{enumerate}
             \item $\lambdas \sim_l \lambdas'$ or
-            \item $\chi, \alpha \vdash p \sim p'$
+            \item $\chi, \alpha \vdash \mathit{Overlap}(p, p')$
         \end{enumerate}
 
     \item If $\Delta, \chi, \alpha \vdash \iota : \lambdas, p$
         and $\Delta, \chi, \alpha \vdash \iota : \{ \lambda \}, t_a$
         then $\lambdas \sim_l \Alias(\lambda)$
 \end{enumerate}
+}
+
+\parbox{\textwidth}{
+$\chi, \alpha \vdash \mathit{Overlap}(p, p')$ iff $p=p'$ or $\exists pe, pe', f, f', \seq{f}, \seq{f'}$
+such that $p = pe . f . \seq{f}$
+and $p' = pe' . f' . \seq{f'}$
+and $\chi(\alpha, pe) = \chi(\alpha, pe')$.
+}
 
 \section{Recovery}
 \subsection{Regioned capabilities}
@@ -307,14 +321,16 @@ $\textit{WFV}(\Delta, \chi)$ iff $\forall \alpha, \alpha', \iota, p, p', \lambda
 \end{align*}
 
 \subsection{Well-formed regions}
-$\textit{WFR}(\Delta, \chi)$ iff $\forall \alpha, \mathtt{S}, z, z', \lambda, \lambda'$,\\
-If $\chi(\alpha, z) = \chi(\alpha, z')$
-and $\Delta(\alpha, z) = \mathtt{S}\ \lambda$
-and $\Delta(\alpha, z') = \mathtt{S}\ \lambda'$
+\parbox{\textwidth}{
+$\textit{WFR}(\Delta, \chi)$ iff $\forall \alpha, \iota, z, z', \seq{f}, \seq{f'}, \lambda, \lambda'$,\\
+If $z\neq z'$
+and $\Delta, \chi, \alpha \vdash \iota : \lambdas, z . \seq{f}$
+and $\Delta, \chi, \alpha \vdash \iota : \lambdas', z' . \seq{f'}$
 then either
 \begin{enumerate}
-    \item $\mathit{Region}(\lambda) = \mathit{Region}(\lambda')$ or
-    \item $\lambda \sim_g \lambda'$
+    \item $\mathit{Region}(\lambdas) = \mathit{Region}(\lambdas')$ or
+    \item $\lambdas \sim_g \lambdas'$
 \end{enumerate}
+}
 
 \end{document}
